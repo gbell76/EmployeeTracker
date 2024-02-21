@@ -48,13 +48,42 @@ const start = async () => {
 
         switch (response.select) {
             case 'View departments':
-                console.log(await viewDepartment())
+                const departmentResponse = await viewDepartment()
+                console.log('id         department name               ')
+                console.log('---------- ------------------------------')
+                for(i in departmentResponse){
+                    let output = '                                         '
+                    output = departmentResponse[i].id + output
+                    output = output.slice(0, 11) + departmentResponse[i].name
+                    console.log(output)
+                }
                 break
             case 'View roles':
-                console.log(await viewRole())
+                const roleResponse = await viewRole()
+                console.log('id         title                          salary                department id')
+                console.log('---------- ------------------------------ --------------------- -------------')
+                for(i in roleResponse){
+                    let output = '                                                                             '
+                    output = roleResponse[i].id + output
+                    output = output.slice(0, 11) + roleResponse[i].title + output.slice(11)
+                    output = output.slice(0, 42) + roleResponse[i].salary + output.slice(42)
+                    output = output.slice(0, 64) + roleResponse[i].department_id
+                    console.log(output)
+                }
                 break
             case 'View employees':
-                console.log(await viewEmployee())
+                const employeeResponse = await viewEmployee()
+                console.log('id         first name                     last name                      role id    manager id')
+                console.log('---------- ------------------------------ ------------------------------ ---------- ----------')
+                for(i in employeeResponse){
+                    let output = '                                                                                              '
+                    output = employeeResponse[i].id + output
+                    output = output.slice(0, 11) + employeeResponse[i].first_name + output.slice(11)
+                    output = output.slice(0, 42) + employeeResponse[i].last_name + output.slice(42)
+                    output = output.slice(0, 73) + employeeResponse[i].role_id + output.slice(73)
+                    output = output.slice(0, 84) + employeeResponse[i].manager_id
+                    console.log(output)
+                }
                 break
             case 'Add department':
                 const dept = await inquirer.prompt([
