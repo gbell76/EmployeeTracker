@@ -86,7 +86,7 @@ const start = async () => {
                 }
                 break
             case 'Add department':
-                const dept = await inquirer.prompt([
+                let dept = await inquirer.prompt([
                     {
                         type: 'input',
                         name: 'department',
@@ -113,17 +113,38 @@ const start = async () => {
                 addDepartment(dept.department)
                 break
             case 'Add role':
-                const role = await inquirer.prompt([
+                const roles = await viewRole()
+                const titles = []
+                for(i in roles){
+                    titles.push(roles[i].title)
+                }
+                let titleResponse = await inquirer.prompt([
                     {
                         type: 'input',
                         name: 'title',
                         message: 'Enter the title (up to 30 characters): '
-                    },
+                    }
+                ])
+                while(titleResponse.title.length > 30 || titles.includes(titleResponse.title)){
+                    if(titles.includes(titleResponse.title)){
+                        console.log('That role already exists.')
+                    }
+                    titleResponse = await inquirer.prompt([
+                        {
+                            type: 'input',
+                            name: 'title',
+                            message: 'Enter the title (up to 30 characters): '
+                        }
+                    ])
+                }
+                const salaryResponse = await inquirer.prompt([
                     {
                         type: 'input',
                         name: 'salary',
                         message: 'Enter the salary: '
-                    },
+                    }
+                ])
+                const deptResponse = await inquirer.prompt([
                     {
                         type: 'list',
                         message: 'Select the department: ',
@@ -133,6 +154,11 @@ const start = async () => {
                         })
                     }
                 ])
+                const role = {
+                    title: titleResponse.title,
+                    salary: salaryResponse.salary,
+                    department_id: deptResponse.department_id
+                }
                 addRole(role)
                 break
             case 'Add employee':
