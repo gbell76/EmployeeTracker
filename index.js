@@ -137,13 +137,23 @@ const start = async () => {
                         }
                     ])
                 }
-                const salaryResponse = await inquirer.prompt([
+                let salaryResponse = await inquirer.prompt([
                     {
                         type: 'input',
                         name: 'salary',
                         message: 'Enter the salary: '
                     }
                 ])
+                while(isNaN(salaryResponse.salary.trim()) || salaryResponse.salary.slice(0, salaryResponse.salary.length-3).includes('.')){
+                    console.log('Salary must be a money value (ex. 250000.00 or 250000).')
+                    salaryResponse = await inquirer.prompt([
+                        {
+                            type: 'input',
+                            name: 'salary',
+                            message: 'Enter the salary: '
+                        }
+                    ])
+                }
                 const deptResponse = await inquirer.prompt([
                     {
                         type: 'list',
