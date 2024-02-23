@@ -19,7 +19,6 @@ const start = async () => {
     }
 
     const addDepartment = async (name) => {
-        console.log(name)
         const response = await sequelize.query(`INSERT INTO department (name) VALUES ('${name}')`)
     }
 
@@ -35,6 +34,49 @@ const start = async () => {
         const response = await sequelize.query(`UPDATE employee SET role_id = ${updatedRole.roleId} WHERE id = ${updatedRole.employeeId}`)
     }
 
+    const updateManager = async (employeeManager) => {
+        const response = await sequelize.query(`UPDATE employee SET manager_id = ${employeeManager.manager} WHERE id = ${employeeManager.employee}`)
+    }
+
+    const viewEmployeesByManager = async (manager) => {
+        const response = await sequelize.query(`SELECT * FROM employee WHERE manager_id = ${manager}`)
+        return response[0]
+    }
+
+    const viewEmployeesByDepartment = async (department) => {
+        const response = await sequelize.query(`SELECT employee.id, first_name, last_name, role_id, manager_id FROM employee INNER JOIN role ON employee.role_id = role.id WHERE department_id = ${department}`)
+        return response[0]
+    }
+
+    const viewBudget = async(department) => {
+        const response = await sequelize.query(`SELECT SUM(salary) FROM (SELECT salary FROM employee INNER JOIN role ON employee.role_id = role.id WHERE department_id = ${department})`)
+        return response[0]
+    }
+
+    const deleteDepartment = async(department) => {
+        try{
+            const response = await sequelize.query(`DELETE FROM department WHERE id = ${department}`)
+        }catch{
+            console.log('There are still roles in that department. Please delete those roles first then try deleting the department again.')
+        }
+    }
+
+    const deleteRole = async(role) => {
+        try{
+            const response = await sequelize.query(`DELETE FROM role WHERE id = ${role}`)
+        }catch{
+            console.log("There are still employees in that role. Please update those employees' roles or delete these employees then try deleting the role again.")
+        }
+    }
+
+    const deleteEmployee = async(employee) => {
+        try{
+            const response = await sequelize.query(`DELETE FROM employee WHERE id = ${employee}`)
+        }catch{
+            console.log("That employee is managing other employees. Please update those employees' manager or delete those employees then try deleting this employee again.")
+        }
+    }
+
     let isRunning = true
     while (isRunning) {
         const response = await inquirer.prompt([
@@ -42,7 +84,7 @@ const start = async () => {
                 type: 'list',
                 message: 'Choose and option below: ',
                 name: 'select',
-                choices: ['View departments', 'View roles', 'View employees', 'Add department', 'Add role', 'Add employee', 'Update employee role', 'Quit']
+                choices: ['View departments', 'View roles', 'View employees', 'View employees by manager', 'View employees by department', 'View total utilized budget of department', 'Add department', 'Add role', 'Add employee', 'Update employee role', 'Update employee manager', 'Delete department', 'Delete role', 'Delete employee', 'Quit']
             }
         ])
 
@@ -222,6 +264,128 @@ const start = async () => {
                     }
                 ])
                 updateEmployeeRole(updatedRole)
+                break
+            case 'Update employee manager':
+                const employeeManager = await inquirer.prompt([
+                    {
+                        type: 'list',
+                        name: 'employee',
+                        message: 'Select the employee: ',
+                        choices: (await viewEmployee()).map((employees) => {
+                            return {name: employees.first_name + ' ' + employees.last_name, value: employees.id}
+                        })
+                    },
+                    {
+                        type: 'list',
+                        name: 'manager',
+                        message: 'Select the new manager: ',
+                        choices: (await viewEmployee()).map((employees) => {
+                            return {name: employees.first_name + ' ' + employees.last_name, value: employees.id}
+                        })
+                    }
+                ])
+                updateManager(employeeManager)
+                break
+            case 'View total utilized budget of department':
+                const budgetResponse = await inquirer.prompt([
+                    {
+                        type: 'list',
+                        name: 'department',
+                        message: 'Select the department name: ',
+                        choices: (await viewDepartment()).map((departments) => {
+                            return {name: departments.name, value: departments.id}
+                        })
+                    }
+                ])
+                const budget = await viewBudget(budgetResponse.department)
+                console.log('The total sum of that department is ' + budget[0].sum)
+                break
+            case 'View employees by manager':
+                const managerResponse = await inquirer.prompt([
+                    {
+                        type: 'list',
+                        name: 'manager',
+                        message: 'Select the manager: ',
+                        choices: (await viewEmployee()).map((employees) => {
+                            return {name: employees.first_name + ' ' + employees.last_name, value: employees.id}
+                        })
+                    }
+                ])
+                const managedEmployees = await viewEmployeesByManager(managerResponse.manager)
+                console.log('id         first name                     last name                      role id    manager id')
+                console.log('---------- ------------------------------ ------------------------------ ---------- ----------')
+                for(i in managedEmployees){
+                    let output = '                                                                                              '
+                    output = managedEmployees[i].id + output
+                    output = output.slice(0, 11) + managedEmployees[i].first_name + output.slice(11)
+                    output = output.slice(0, 42) + managedEmployees[i].last_name + output.slice(42)
+                    output = output.slice(0, 73) + managedEmployees[i].role_id + output.slice(73)
+                    output = output.slice(0, 84) + managedEmployees[i].manager_id
+                    console.log(output)
+                }
+                break
+            case 'View employees by department':
+                const depResponse = await inquirer.prompt([
+                    {
+                        type: 'list',
+                        name: 'department',
+                        message: 'Select the department: ',
+                        choices: (await viewDepartment()).map((departments) => {
+                            return {name: departments.name, value: departments.id}
+                        })
+                    }
+                ])
+                const departmentEmployees = await viewEmployeesByDepartment(depResponse.department)
+                console.log('id         first name                     last name                      role id    manager id')
+                console.log('---------- ------------------------------ ------------------------------ ---------- ----------')
+                for(i in departmentEmployees){
+                    let output = '                                                                                              '
+                    output = departmentEmployees[i].id + output
+                    output = output.slice(0, 11) + departmentEmployees[i].first_name + output.slice(11)
+                    output = output.slice(0, 42) + departmentEmployees[i].last_name + output.slice(42)
+                    output = output.slice(0, 73) + departmentEmployees[i].role_id + output.slice(73)
+                    output = output.slice(0, 84) + departmentEmployees[i].manager_id
+                    console.log(output)
+                }
+                break
+            case 'Delete department':
+                const deleteDepResponse = await inquirer.prompt([
+                    {
+                        type: 'list',
+                        name: 'department',
+                        message: 'Select the department to delete: ',
+                        choices: (await viewDepartment()).map((departments) => {
+                            return {name: departments.name, value: departments.id}
+                        })
+                    }
+                ])
+                await deleteDepartment(deleteDepResponse.department)
+                break
+            case 'Delete role':
+                const deleteRoleResponse = await inquirer.prompt([
+                    {
+                        type: 'list',
+                        name: 'role',
+                        message: 'Select the role to delete: ',
+                        choices: (await viewRole()).map((roles) => {
+                            return {name: roles.title, value: roles.id}
+                        })
+                    }
+                ])
+                await deleteRole(deleteRoleResponse.role)
+                break
+            case 'Delete employee':
+                const deleteEmployeeResponse = await inquirer.prompt([
+                    {
+                        type: 'list',
+                        name: 'employee',
+                        message: 'Select the employee to delete: ',
+                        choices: (await viewEmployee()).map((employees) => {
+                            return {name: employees.first_name + ' ' + employees.last_name, value: employees.id}
+                        })
+                    }
+                ])
+                await deleteEmployee(deleteEmployeeResponse.employee)
                 break
             case 'Quit':
                 isRunning = false
