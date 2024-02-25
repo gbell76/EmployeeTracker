@@ -230,7 +230,7 @@ const start = async () => {
                         name: 'roleId',
                         message: 'Select the role of the employee: ',
                         choices: (await viewRole()).map((roles) => {
-                            return { title: roles.title, value: roles.id }
+                            return { name: roles.title, value: roles.id }
                         })
                     },
                     {
